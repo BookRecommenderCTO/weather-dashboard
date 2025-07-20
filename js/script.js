@@ -2,7 +2,7 @@ const cities = ['New York', 'London', 'Tokyo'];
 
 // Using OpenWeatherMap API - you'll need to get a free API key
 // Visit: https://openweathermap.org/api
-const API_KEY = 'YOUR_API_KEY_HERE'; // Replace with your actual API key
+const API_KEY = '47d05f31a987ba26930cfaa7fd83326c'; // OpenWeatherMap API key
 const API_URL = 'https://api.openweathermap.org/data/2.5/weather';
 
 async function getWeather(city, elementId) {
