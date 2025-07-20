@@ -1,40 +1,26 @@
 const cities = ['New York', 'London', 'Tokyo'];
 
-// Using OpenAI for weather data
-// NOTE: Replace these placeholders with your actual OpenAI credentials
-const OPENAI_ORG = "INSERT_OPENAI_ORG_HERE";
-const OPENAI_API_KEY = "INSERT_OPENAI_API_KEY_HERE";
-const OPENAI_API_URL = 'https://api.openai.com/v1/completions';
+// Using OpenWeatherMap API - API key is now ACTIVE!
+const API_KEY = '47d05f31a987ba26930cfaa7fd83326c'; // OpenWeatherMap API key  
+const API_URL = 'https://api.openweathermap.org/data/2.5/weather';
 
 async function getWeather(city, elementId) {
     try {
-        // Ask OpenAI about the weather
-        const response = await fetch(OPENAI_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                'OpenAI-Organization': OPENAI_ORG
-            },
-            body: JSON.stringify({
-                model: "text-davinci-003",
-                prompt: `What is the weather in ${city}?`,
-                max_tokens: 100,
-                n: 1,
-                stop: null,
-                temperature: 0.5
-            })
-        });
-
+        // Fetch real weather data from OpenWeatherMap
+        const response = await fetch(`${API_URL}?q=${city}&appid=${API_KEY}&units=metric`);
         const data = await response.json();
         
-        if (data.choices && data.choices[0]) {
-            const weatherInfo = data.choices[0].text.trim();
+        if (data.main) {
+            const temp = Math.round(data.main.temp);
+            const description = data.weather[0].description;
+            const humidity = data.main.humidity;
             
             // Display the result
             document.getElementById(elementId).innerHTML = `
                 <h3>${city}</h3>
-                <p>${weatherInfo}</p>
+                <p>${temp}°C</p>
+                <p>${description}</p>
+                <small>Humidity: ${humidity}%</small>
             `;
         } else {
             document.getElementById(elementId).innerHTML = `
