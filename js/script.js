@@ -6,9 +6,14 @@ const API_KEY = '47d05f31a987ba26930cfaa7fd83326c'; // OpenWeatherMap API key
 const API_URL = 'https://api.openweathermap.org/data/2.5/weather';
 
 async function getWeather(city, elementId) {
+    const url = `${API_URL}?q=${city}&appid=${API_KEY}&units=metric`;
+    console.log(`Fetching weather for ${city}:`, url.replace(API_KEY, 'API_KEY_HIDDEN'));
+    
     try {
-        const response = await fetch(`${API_URL}?q=${city}&appid=${API_KEY}&units=metric`);
+        const response = await fetch(url);
+        console.log(`Response status for ${city}:`, response.status);
         const data = await response.json();
+        console.log(`Response data for ${city}:`, data);
         
         if (data.main) {
             const temp = Math.round(data.main.temp);
