@@ -5,7 +5,8 @@
   "main": "build.js",
   "scripts": {
     "build": "node build.js",
-    "dev": "node build.js && cd dist && python -m http.server 8000",
+    "start": "npx serve dist -p $PORT",
+    "dev": "npm run build && npx serve dist -p 8000",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": ["weather", "dashboard", "openai", "javascript"],
@@ -13,5 +14,8 @@
   "license": "MIT",
   "engines": {
     "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
   }
 }
