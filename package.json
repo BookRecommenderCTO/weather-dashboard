@@ -1,0 +1,17 @@
+{
+  "name": "weather-dashboard",
+  "version": "1.0.0",
+  "description": "A responsive weather dashboard using OpenAI",
+  "main": "build.js",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js && cd dist && python -m http.server 8000",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": ["weather", "dashboard", "openai", "javascript"],
+  "author": "BookRecommenderCTO",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
