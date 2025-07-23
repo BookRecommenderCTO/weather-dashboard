@@ -1,13 +1,12 @@
 const cities = ['New York', 'London', 'Tokyo'];
 
-// Using OpenWeatherMap API - API key is now ACTIVE!
-const API_KEY = '47d05f31a987ba26930cfaa7fd83326c'; // OpenWeatherMap API key  
-const API_URL = 'https://api.openweathermap.org/data/2.5/weather';
+// Using server API to track performance
+const API_URL = '/api/weather';
 
 async function getWeather(city, elementId) {
     try {
-        // Fetch real weather data from OpenWeatherMap
-        const response = await fetch(`${API_URL}?q=${city}&appid=${API_KEY}&units=metric`);
+        // Fetch weather data through server API
+        const response = await fetch(`${API_URL}/${encodeURIComponent(city)}`);
         const data = await response.json();
         
         if (data.main) {
