@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: weather-dashboard
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: OPENWEATHER_API_KEY
+        value: 47d05f31a987ba26930cfaa7fd83326c
+      - key: PERFORMANCE_PASSWORD
+        value: admin123  # Change this to your preferred password
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /
+    autoDeploy: true
