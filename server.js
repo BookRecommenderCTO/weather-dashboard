@@ -81,16 +81,26 @@ function validateCityName(city) {
 app.use((req, res, next) => {
     const startTime = Date.now();
     
-    // Record hit to database if available
-    if (useDatabase) {
+    // Only track meaningful user page visits, not API calls, assets, etc.
+    const isUserPageVisit = (
+        req.method === 'GET' && 
+        (req.path === '/' || req.path === '/performance') &&
+        !req.path.startsWith('/api/') &&
+        !req.path.startsWith('/css/') &&
+        !req.path.startsWith('/js/') &&
+        !req.path.includes('.') // Skip files with extensions (css, js, images, etc.)
+    );
+    
+    // Record hit to database if available (only for user page visits)
+    if (useDatabase && isUserPageVisit) {
         db.recordHit(req.path, req.method, req.ip || req.connection.remoteAddress);
     }
     
-    // Track response time
+    // Track response time for all requests (for performance monitoring)
     res.on('finish', () => {
         const responseTime = Date.now() - startTime;
         
-        // Record response time to database if available
+        // Record response time to database if available (for all requests)
         if (useDatabase) {
             db.recordResponseTime(req.path, responseTime);
         }

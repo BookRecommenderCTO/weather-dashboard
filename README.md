@@ -118,10 +118,12 @@ python APItester/test_api.py
 
 ## Performance Metrics Tracked
 
-- **Page Hits**: Counts all requests to the application (stored in database)
-- **Response Times**: Measures server response time for all requests
+- **User Page Visits**: Counts only actual user visits to main pages (/ and /performance)
+  - Excludes API calls, CSS/JS files, and other assets
+  - Focuses on meaningful user interactions
+- **Response Times**: Measures server response time for all requests (for performance monitoring)
 - **Data Retention**: 
-  - Hits: 30 days (automatically cleaned)
+  - User visits: 30 days (automatically cleaned)
   - Response times: 7 days (automatically cleaned)
 - **Real-time**: Updates every 30 seconds on the performance dashboard
 - **Persistence**: Data survives server restarts and deployments
