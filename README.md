@@ -11,7 +11,7 @@ A weather dashboard with server-side performance tracking, built with Node.js an
 - Auto-refreshes every 10 minutes
 
 ### Performance Dashboard
-- **Password Protected** - Secure access to performance metrics
+- **Publicly Accessible** - No password required for access
 - **Hit Tracking** - Number of hits in the last 24 hours, week, and month
 - **Response Time Monitoring** - Average response times for last hour and 24 hours
 - **Real-time Updates** - Auto-refreshes every 30 seconds
@@ -54,20 +54,17 @@ A weather dashboard with server-side performance tracking, built with Node.js an
 2. Create a new **Web Service** (not Static Site)
 3. Set environment variables in Render dashboard:
    - `OPENWEATHER_API_KEY`: Your OpenWeatherMap API key
-   - `PERFORMANCE_PASSWORD`: Password for performance dashboard access
 4. Deploy!
 
 ## Environment Variables
 
 - `OPENWEATHER_API_KEY`: API key from OpenWeatherMap
-- `PERFORMANCE_PASSWORD`: Password for performance dashboard (default: admin123)
 - `PORT`: Server port (automatically set by Render)
 
 ## Performance Dashboard Access
 
 - **URL**: `/performance`
-- **Username**: `admin`
-- **Password**: Set via `PERFORMANCE_PASSWORD` environment variable
+- **Access**: Publicly accessible (no authentication required)
 
 ## Architecture
 
@@ -79,8 +76,8 @@ A weather dashboard with server-side performance tracking, built with Node.js an
 ## API Endpoints
 
 - `GET /` - Main weather dashboard
-- `GET /performance` - Performance dashboard (protected)
-- `GET /api/performance` - Performance data JSON (protected)
+- `GET /performance` - Performance dashboard (public)
+- `GET /api/performance` - Performance data JSON (public)
 - `GET /api/weather/:city` - Weather data for specific city
 
 ## Files
@@ -120,9 +117,10 @@ python APItester/test_api.py
 
 ## Security
 
-- Performance dashboard is password-protected using Basic HTTP Authentication
+- Performance dashboard is publicly accessible for easy monitoring
 - Environment variables keep sensitive data secure
 - API key is server-side only, not exposed to client
+- Rate limiting protects against abuse
 
 ## License
 

@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const auth = require('basic-auth');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
@@ -15,10 +14,7 @@ let performanceData = {
 };
 
 // Configuration with validation
-if (!process.env.PERFORMANCE_PASSWORD) {
-    console.warn('⚠️  WARNING: Using default password. Set PERFORMANCE_PASSWORD environment variable!');
-}
-const PERFORMANCE_PASSWORD = process.env.PERFORMANCE_PASSWORD || generateSecurePassword();
+// Note: Performance dashboard is now publicly accessible
 
 if (!process.env.OPENWEATHER_API_KEY) {
     console.warn('⚠️  WARNING: No OpenWeatherMap API key found. Weather features may not work.');
@@ -53,11 +49,10 @@ const apiLimiter = rateLimit({
     message: 'Too many API requests from this IP, please try again later.'
 });
 
-const authLimiter = rateLimit({
+const performanceLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 failed auth attempts per windowMs
-    message: 'Too many authentication attempts, please try again later.',
-    skipSuccessfulRequests: true
+    max: 20, // limit each IP to 20 performance requests per windowMs
+    message: 'Too many performance requests, please try again later.'
 });
 
 // CORS configuration - restrict origins in production
@@ -74,15 +69,7 @@ app.use(express.json({ limit: '10mb' })); // Limit payload size
 app.use(express.static('public'));
 app.use(generalLimiter);
 
-// Generate secure password if none provided
-function generateSecurePassword() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-    let password = '';
-    for (let i = 0; i < 16; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
-}
+// Password generation function removed - performance dashboard is now public
 
 // Input validation function
 function validateCityName(city) {
@@ -141,30 +128,21 @@ app.use((req, res, next) => {
     next();
 });
 
-// Authentication middleware for performance dashboard
-const requireAuth = (req, res, next) => {
-    const credentials = auth(req);
-    
-    if (!credentials || credentials.name !== 'admin' || credentials.pass !== PERFORMANCE_PASSWORD) {
-        res.set('WWW-Authenticate', 'Basic realm="Performance Dashboard"');
-        return res.status(401).send('Authentication required');
-    }
-    
-    next();
-};
+// Authentication middleware for performance dashboard - REMOVED
+// Performance dashboard is now publicly accessible
 
 // Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Performance dashboard route (password protected)
-app.get('/performance', authLimiter, requireAuth, (req, res) => {
+// Performance dashboard route (publicly accessible)
+app.get('/performance', performanceLimiter, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'performance.html'));
 });
 
-// API endpoint to get performance data
-app.get('/api/performance', authLimiter, requireAuth, (req, res) => {
+// API endpoint to get performance data (publicly accessible)
+app.get('/api/performance', performanceLimiter, (req, res) => {
     const now = new Date();
     
     // Calculate hits
@@ -292,16 +270,19 @@ process.on('unhandledRejection', (reason, promise) => {
     process.exit(1);
 });
 
-// Start server - bind to all interfaces in production, localhost in development
-const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
+// Start server - bind to 0.0.0.0 for Render, localhost for local development
+const host = process.env.PORT ? '0.0.0.0' : '127.0.0.1'; // If PORT env var exists, we're on Render
 const server = app.listen(PORT, host, () => {
     console.log(`Weather Dashboard server running on ${host}:${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Host binding: ${host} (${process.env.PORT ? 'Render' : 'Local'})`);
     if (host === '127.0.0.1') {
         console.log(`Main dashboard: http://localhost:${PORT}`);
         console.log(`Performance dashboard: http://localhost:${PORT}/performance`);
+    } else {
+        console.log(`Service will be available at your Render URL`);
     }
-    console.log(`Performance login: admin / ${PERFORMANCE_PASSWORD}`);
+    console.log('Performance dashboard is publicly accessible (no login required)');
     console.log('Server started successfully!');
 });
 
