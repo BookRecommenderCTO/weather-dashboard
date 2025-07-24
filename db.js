@@ -170,6 +170,25 @@ async function cleanOldData() {
     }
 }
 
+// Reset all performance data (clear all tables)
+async function resetPerformanceData() {
+    const client = await pool.connect();
+    
+    try {
+        // Clear all data from both tables
+        await client.query('DELETE FROM hits');
+        await client.query('DELETE FROM response_times');
+        
+        console.log('🗑️ Performance database reset successfully');
+        return true;
+    } catch (error) {
+        console.error('Error resetting performance data:', error);
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
 // Test database connection
 async function testConnection() {
     try {
@@ -190,6 +209,7 @@ module.exports = {
     recordResponseTime,
     getPerformanceData,
     cleanOldData,
+    resetPerformanceData,
     testConnection,
     pool
 };

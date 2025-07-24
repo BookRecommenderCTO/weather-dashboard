@@ -155,6 +155,32 @@ app.get('/api/performance', performanceLimiter, async (req, res) => {
     }
 });
 
+// API endpoint to reset performance data (POST request for safety)
+app.post('/api/performance/reset', performanceLimiter, async (req, res) => {
+    try {
+        if (useDatabase) {
+            await db.resetPerformanceData();
+            res.json({
+                success: true,
+                message: 'Performance database reset successfully',
+                resetAt: new Date()
+            });
+        } else {
+            res.status(503).json({
+                success: false,
+                error: 'Database not connected - cannot reset data'
+            });
+        }
+    } catch (error) {
+        console.error('Error resetting performance data:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Unable to reset performance data',
+            message: error.message
+        });
+    }
+});
+
 // API proxy for weather data (to track weather API calls)
 app.get('/api/weather/:city', apiLimiter, async (req, res) => {
     const { city } = req.params;
