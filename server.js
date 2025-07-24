@@ -3,15 +3,13 @@ const path = require('path');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Performance data storage (in-memory for simplicity)
-let performanceData = {
-    hits: [],
-    responseTimes: []
-};
+// Database will be used for performance data storage
+let useDatabase = false;
 
 // Configuration with validation
 // Note: Performance dashboard is now publicly accessible
@@ -79,50 +77,23 @@ function validateCityName(city) {
     return true;
 }
 
-// Performance tracking middleware with memory limits
+// Performance tracking middleware with database storage
 app.use((req, res, next) => {
     const startTime = Date.now();
     
-    // Memory protection - limit array sizes
-    const MAX_HITS = 10000;
-    const MAX_RESPONSE_TIMES = 5000;
-    
-    // Track hit with memory limits
-    performanceData.hits.push({
-        timestamp: new Date(),
-        path: req.path,
-        method: req.method,
-        ip: req.ip || req.connection.remoteAddress
-    });
-    
-    // Enforce memory limits
-    if (performanceData.hits.length > MAX_HITS) {
-        performanceData.hits = performanceData.hits.slice(-MAX_HITS);
+    // Record hit to database if available
+    if (useDatabase) {
+        db.recordHit(req.path, req.method, req.ip || req.connection.remoteAddress);
     }
-    
-    // Clean old data (keep only last 30 days)
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    performanceData.hits = performanceData.hits.filter(hit => hit.timestamp > thirtyDaysAgo);
     
     // Track response time
     res.on('finish', () => {
         const responseTime = Date.now() - startTime;
-        performanceData.responseTimes.push({
-            timestamp: new Date(),
-            responseTime: responseTime,
-            path: req.path
-        });
         
-        // Enforce memory limits
-        if (performanceData.responseTimes.length > MAX_RESPONSE_TIMES) {
-            performanceData.responseTimes = performanceData.responseTimes.slice(-MAX_RESPONSE_TIMES);
+        // Record response time to database if available
+        if (useDatabase) {
+            db.recordResponseTime(req.path, responseTime);
         }
-        
-        // Clean old response times (keep only last 24 hours for detailed tracking)
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        performanceData.responseTimes = performanceData.responseTimes.filter(
-            rt => rt.timestamp > oneDayAgo
-        );
     });
     
     next();
@@ -142,49 +113,36 @@ app.get('/performance', performanceLimiter, (req, res) => {
 });
 
 // API endpoint to get performance data (publicly accessible)
-app.get('/api/performance', performanceLimiter, (req, res) => {
-    const now = new Date();
-    
-    // Calculate hits
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
-    const hits24h = performanceData.hits.filter(hit => hit.timestamp > oneDayAgo).length;
-    const hits7d = performanceData.hits.filter(hit => hit.timestamp > oneWeekAgo).length;
-    const hits30d = performanceData.hits.filter(hit => hit.timestamp > oneMonthAgo).length;
-    
-    // Calculate average response times
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    
-    const responseTimesLastHour = performanceData.responseTimes.filter(
-        rt => rt.timestamp > oneHourAgo
-    );
-    const responseTimesLast24h = performanceData.responseTimes.filter(
-        rt => rt.timestamp > oneDayAgo
-    );
-    
-    const avgResponseTime1h = responseTimesLastHour.length > 0 
-        ? Math.round(responseTimesLastHour.reduce((sum, rt) => sum + rt.responseTime, 0) / responseTimesLastHour.length)
-        : 0;
-        
-    const avgResponseTime24h = responseTimesLast24h.length > 0
-        ? Math.round(responseTimesLast24h.reduce((sum, rt) => sum + rt.responseTime, 0) / responseTimesLast24h.length)
-        : 0;
-    
-    res.json({
-        hits: {
-            last24hours: hits24h,
-            lastWeek: hits7d,
-            lastMonth: hits30d
-        },
-        averageResponseTime: {
-            lastHour: avgResponseTime1h,
-            last24Hours: avgResponseTime24h
-        },
-        totalRequests: performanceData.hits.length,
-        lastUpdated: now
-    });
+app.get('/api/performance', performanceLimiter, async (req, res) => {
+    try {
+        if (useDatabase) {
+            // Get data from database
+            const performanceData = await db.getPerformanceData();
+            res.json(performanceData);
+        } else {
+            // Fallback response when database is not available
+            res.json({
+                hits: {
+                    last24hours: 0,
+                    lastWeek: 0,
+                    lastMonth: 0
+                },
+                averageResponseTime: {
+                    lastHour: 0,
+                    last24Hours: 0
+                },
+                totalRequests: 0,
+                lastUpdated: new Date(),
+                message: 'Database not connected - performance tracking disabled'
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching performance data:', error);
+        res.status(500).json({
+            error: 'Unable to fetch performance data',
+            message: error.message
+        });
+    }
 });
 
 // API proxy for weather data (to track weather API calls)
@@ -270,24 +228,65 @@ process.on('unhandledRejection', (reason, promise) => {
     process.exit(1);
 });
 
-// Start server - bind to 0.0.0.0 for Render, localhost for local development
-const host = process.env.PORT ? '0.0.0.0' : '127.0.0.1'; // If PORT env var exists, we're on Render
-const server = app.listen(PORT, host, () => {
-    console.log(`Weather Dashboard server running on ${host}:${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`Host binding: ${host} (${process.env.PORT ? 'Render' : 'Local'})`);
-    if (host === '127.0.0.1') {
-        console.log(`Main dashboard: http://localhost:${PORT}`);
-        console.log(`Performance dashboard: http://localhost:${PORT}/performance`);
+// Initialize database and start server
+async function startServer() {
+    // Test database connection
+    if (process.env.DATABASE_URL) {
+        console.log('🔄 Testing database connection...');
+        const dbConnected = await db.testConnection();
+        
+        if (dbConnected) {
+            try {
+                await db.initializeDatabase();
+                useDatabase = true;
+                console.log('📊 Database performance tracking enabled');
+                
+                // Set up periodic cleanup (every 24 hours)
+                setInterval(async () => {
+                    try {
+                        await db.cleanOldData();
+                    } catch (error) {
+                        console.error('Error during periodic cleanup:', error);
+                    }
+                }, 24 * 60 * 60 * 1000);
+                
+            } catch (error) {
+                console.error('❌ Database initialization failed:', error);
+                console.log('⚠️  Continuing without database - performance tracking disabled');
+            }
+        } else {
+            console.log('⚠️  Database connection failed - performance tracking disabled');
+        }
     } else {
-        console.log(`Service will be available at your Render URL`);
+        console.log('ℹ️  No DATABASE_URL provided - performance tracking disabled');
     }
-    console.log('Performance dashboard is publicly accessible (no login required)');
-    console.log('Server started successfully!');
-});
+    
+    // Start server - bind to 0.0.0.0 for Render, localhost for local development
+    const host = process.env.PORT ? '0.0.0.0' : '127.0.0.1'; // If PORT env var exists, we're on Render
+    const server = app.listen(PORT, host, () => {
+        console.log(`Weather Dashboard server running on ${host}:${PORT}`);
+        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`Host binding: ${host} (${process.env.PORT ? 'Render' : 'Local'})`);
+        if (host === '127.0.0.1') {
+            console.log(`Main dashboard: http://localhost:${PORT}`);
+            console.log(`Performance dashboard: http://localhost:${PORT}/performance`);
+        } else {
+            console.log(`Service will be available at your Render URL`);
+        }
+        console.log('Performance dashboard is publicly accessible (no login required)');
+        console.log(`Performance tracking: ${useDatabase ? 'DATABASE ENABLED' : 'DISABLED'}`);
+        console.log('Server started successfully!');
+    });
+    
+    server.on('error', (err) => {
+        console.error('Server error:', err);
+    });
+}
 
-server.on('error', (err) => {
-    console.error('Server error:', err);
+// Start the server
+startServer().catch(error => {
+    console.error('Failed to start server:', error);
+    process.exit(1);
 });
 
 module.exports = app;

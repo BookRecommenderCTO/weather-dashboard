@@ -15,7 +15,8 @@ A weather dashboard with server-side performance tracking, built with Node.js an
 - **Hit Tracking** - Number of hits in the last 24 hours, week, and month
 - **Response Time Monitoring** - Average response times for last hour and 24 hours
 - **Real-time Updates** - Auto-refreshes every 30 seconds
-- **Memory-based Storage** - Suitable for Render's free tier
+- **Persistent Storage** - PostgreSQL database preserves data across deployments
+- **Automatic Cleanup** - Old data is automatically cleaned to manage storage
 
 ## Deployment URLs
 
@@ -51,14 +52,18 @@ A weather dashboard with server-side performance tracking, built with Node.js an
 ### Render Deployment
 
 1. Connect your GitHub repository to Render
-2. Create a new **Web Service** (not Static Site)
+2. The `render.yaml` file will automatically create:
+   - A **Web Service** for the application
+   - A **PostgreSQL Database** (free tier) for performance data
 3. Set environment variables in Render dashboard:
    - `OPENWEATHER_API_KEY`: Your OpenWeatherMap API key
+   - `DATABASE_URL`: Automatically set by Render database service
 4. Deploy!
 
 ## Environment Variables
 
 - `OPENWEATHER_API_KEY`: API key from OpenWeatherMap
+- `DATABASE_URL`: PostgreSQL connection string (automatically set by Render)
 - `PORT`: Server port (automatically set by Render)
 
 ## Performance Dashboard Access
@@ -70,8 +75,9 @@ A weather dashboard with server-side performance tracking, built with Node.js an
 
 - **Frontend**: Static HTML/CSS/JS served by Express
 - **Backend**: Node.js with Express server
-- **Performance Tracking**: In-memory storage (resets on restart)
-- **Authentication**: Basic HTTP authentication for performance dashboard
+- **Database**: PostgreSQL for persistent performance data storage
+- **Performance Tracking**: Database-backed with automatic cleanup
+- **Authentication**: None required - publicly accessible
 
 ## API Endpoints
 
@@ -83,7 +89,9 @@ A weather dashboard with server-side performance tracking, built with Node.js an
 ## Files
 
 - `server.js` - Express server with performance tracking
+- `db.js` - PostgreSQL database operations and schema
 - `package.json` - Node.js dependencies and scripts
+- `render.yaml` - Render deployment configuration (includes database)
 - `public/` - Static files (HTML, CSS, JS)
   - `index.html` - Main weather dashboard
   - `performance.html` - Performance dashboard
@@ -102,18 +110,21 @@ python APItester/test_api.py
 ## Tech Stack
 
 - **Backend**: Node.js, Express.js
+- **Database**: PostgreSQL (Render free tier)
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **Authentication**: Basic HTTP Auth
 - **API**: OpenWeatherMap API
-- **Hosting**: Render.com (Web Service)
+- **Hosting**: Render.com (Web Service + Database)
 - **Version Control**: Git/GitHub
 
 ## Performance Metrics Tracked
 
-- **Page Hits**: Counts all requests to the application
+- **Page Hits**: Counts all requests to the application (stored in database)
 - **Response Times**: Measures server response time for all requests
-- **Time Periods**: Data retention for up to 30 days (hits) and 24 hours (response times)
+- **Data Retention**: 
+  - Hits: 30 days (automatically cleaned)
+  - Response times: 7 days (automatically cleaned)
 - **Real-time**: Updates every 30 seconds on the performance dashboard
+- **Persistence**: Data survives server restarts and deployments
 
 ## Security
 
