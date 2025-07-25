@@ -9,13 +9,28 @@
 <body>
     <div class="container">
         <h1>Weather Dashboard</h1>
-        <div style="text-align: center; margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
-            <a href="/performance" class="performance-link">📊 Performance Dashboard</a>
+        <p class="subtitle">Real-time weather information for major cities worldwide</p>
+        
+        <div class="performance-dashboard">
+            <a href="/performance" class="performance-link">Performance Dashboard</a>
         </div>
+        
         <div class="weather">
-            <div class="city" id="city1">Loading...</div>
-            <div class="city" id="city2">Loading...</div>
-            <div class="city" id="city3">Loading...</div>
+            <div class="city" id="city1">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            <div class="city" id="city2">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            <div class="city" id="city3">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
         </div>
     </div>
     <script src="js/script.js"></script>
