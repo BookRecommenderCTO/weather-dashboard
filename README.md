@@ -115,6 +115,71 @@ python APItester/test_api.py
 - **API**: OpenWeatherMap API
 - **Hosting**: Render.com (Web Service + Database)
 - **Version Control**: Git/GitHub
+- **CLI**: Render CLI for deployment management
+
+## 🚀 Render CLI Setup
+
+### Quick Setup for Development Sessions
+
+```powershell
+# One-line setup (copy and paste this at start of any session)
+cd "C:\Users\BookR\OneDrive\Documents\weather-dashboard"; $env:HOME = $env:USERPROFILE; if (!(Test-Path ".\render.exe")) { Invoke-WebRequest -Uri "https://github.com/render-oss/render-cli-deprecated/releases/download/v0.1.11/render-windows-x86_64.exe" -OutFile "render.exe" -UseBasicParsing }; .\render.exe services list
+```
+
+### Alternative: Use Setup Script
+
+```powershell
+# Run the automated setup script
+powershell -ExecutionPolicy Bypass -File ".\quick-render-setup.ps1"
+```
+
+### Manual Setup Steps
+
+1. **Set Environment Variable**:
+   ```powershell
+   $env:HOME = $env:USERPROFILE
+   ```
+
+2. **Download Render CLI** (if not present):
+   ```powershell
+   Invoke-WebRequest -Uri "https://github.com/render-oss/render-cli-deprecated/releases/download/v0.1.11/render-windows-x86_64.exe" -OutFile "render.exe" -UseBasicParsing
+   ```
+
+3. **Verify Installation**:
+   ```powershell
+   .\render.exe version
+   ```
+
+4. **Configure CLI** (first time only):
+   ```powershell
+   .\render.exe config init
+   ```
+
+### Common Render CLI Commands
+
+```powershell
+# Always set HOME first
+$env:HOME = $env:USERPROFILE
+
+# List services
+.\render.exe services list
+
+# Show service details
+.\render.exe services show --id srv-d20i38fdiees739ij7eg
+
+# List recent deployments
+.\render.exe deploys list --service-id srv-d20i38fdiees739ij7eg
+
+# View service logs
+.\render.exe services tail --service-id srv-d20i38fdiees739ij7eg
+```
+
+### Service Information
+
+- **Main Service ID**: `srv-d20i38fdiees739ij7eg`
+- **Service Name**: `weather-dashboard-app`
+- **Live URL**: https://weather-dashboard-app-p0vz.onrender.com
+- **Dashboard URL**: https://dashboard.render.com/web/srv-d20i38fdiees739ij7eg
 
 ## Performance Metrics Tracked
 
